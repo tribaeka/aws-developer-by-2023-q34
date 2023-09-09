@@ -1,0 +1,110 @@
+body.main {
+  color: #fff;
+  font-size: 8rem;
+  font-weight: 500;
+  font-family: "Roboto Slab";
+  font-feature-settings: "palt";
+  line-height: 1.25;
+  letter-spacing: 0.1em;
+}
+
+body.index
+{
+   font-weight: 50;
+   font-size: 50px;
+}
+
+.link
+{
+   color: white;
+}
+
+.flex-index {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(0deg, #290979 0%, #7cffd6 100%);
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.flex-center {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(0deg, #290979 0%, #7cffd6 100%);
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.flex {
+  display: flex;
+}
+
+span {
+  display: block;
+  text-shadow: 0 0 8px #fff;
+  animation-name: cross-fade-blur;
+  animation-duration: 4s;
+  animation-iteration-count: infinite;
+}
+span:nth-child(1) {
+  animation-delay: 0.04s;
+}
+span:nth-child(2) {
+  animation-delay: 0.08s;
+}
+span:nth-child(3) {
+  animation-delay: 0.12s;
+}
+span:nth-child(4) {
+  animation-delay: 0.16s;
+}
+span:nth-child(5) {
+  animation-delay: 0.2s;
+}
+span:nth-child(6) {
+  animation-delay: 0.24s;
+}
+span:nth-child(7) {
+  animation-delay: 0.28s;
+}
+span:nth-child(8) {
+  animation-delay: 0.32s;
+}
+span:nth-child(9) {
+  animation-delay: 0.36s;
+}
+span:nth-child(10) {
+  animation-delay: 0.4s;
+}
+
+@keyframes cross-fade-blur {
+  0% {
+    opacity: 0;
+    filter: blur(1rem);
+    transform: translate3d(0, 3rem, 0) rotate3d(0.25, -1, 0, 66.6deg);
+  }
+  20%, 60% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translate3d(0, 0, 0);
+  }
+  80%, 100% {
+    opacity: 0;
+    filter: blur(1rem);
+    transform: translate3d(0, -3rem, 0) rotate3d(-0.25, 1, 0, 66.6deg);
+  }
+}

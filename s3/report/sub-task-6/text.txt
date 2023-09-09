@@ -1,0 +1,2 @@
+1. On my previous project i've used s3 bucket to store logo of partners products, in result the website header was responsible for read operation and in admin ui admin user had ability to specificy wich logo user should see based on it's account id.
+2. On my current project there is a chance that i'll implement s3 bucket with will play role of tmp storage between lambdas, it will store some pdf or csv reports.
