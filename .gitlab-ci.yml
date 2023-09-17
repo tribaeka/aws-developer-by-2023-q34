@@ -1,0 +1,37 @@
+image: node:14
+
+stages:
+  - build
+  - deploy
+
+cache:
+  paths:
+    - node_modules/
+
+install_dependencies:
+  stage: build
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 day
+
+build_app:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 day
+
+upload_to_s3:
+  stage: deploy
+  image: python:3
+  needs:
+    - build_app
+  before_script:
+    - apt-get update && apt-get install -y awscli
+  script:
+    - aws s3 sync ./build s3://$S3_BUCKET_NAME --acl public-read --delete
