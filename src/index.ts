@@ -4,6 +4,7 @@ import { MetadataService } from 'aws-sdk';
 const app = express();
 
 const infoMiddleware = async (req: Request, res: Response): Promise<void> => {
+    console.log('it works!')
     const metadataService = new MetadataService();
 
     metadataService.request('/latest/meta-data/placement/availability-zone', (err, data) => {
