@@ -1,0 +1,336 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "YahorHlushakAMI": {
+      "Type": "String"
+    },
+    "YahorHlushakInstanceType": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "yahor-hlushak-ci"
+      }
+    },
+    "YahorHlushakNetwork": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "yahor-hlushak-network"
+          }
+        ]
+      }
+    },
+    "YahorHlushakInternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "yahor-hlushak-internet-gateway"
+          }
+        ]
+      }
+    },
+    "InternetGatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "YahorHlushakNetwork"
+        },
+        "InternetGatewayId": {
+          "Ref": "YahorHlushakInternetGateway"
+        }
+      }
+    },
+    "YahorHlushakPublicSubnetA": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "YahorHlushakNetwork"
+        },
+        "CidrBlock": "10.0.11.0/24",
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "YahorHlushakPublicSubnetA"
+          }
+        ]
+      }
+    },
+    "YahorHlushakPublicSubnetB": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "YahorHlushakNetwork"
+        },
+        "CidrBlock": "10.0.12.0/24",
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "YahorHlushakPublicSubnetB"
+          }
+        ]
+      }
+    },
+    "YahorHlushakRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "YahorHlushakNetwork"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "YahorHlushakRouteTable"
+          }
+        ]
+      }
+    },
+    "Route": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "InternetGatewayAttachment",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "YahorHlushakRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "YahorHlushakInternetGateway"
+        }
+      }
+    },
+    "SubnetRouteTableAssociationA": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "YahorHlushakPublicSubnetA"
+        },
+        "RouteTableId": {
+          "Ref": "YahorHlushakRouteTable"
+        }
+      }
+    },
+    "SubnetRouteTableAssociationB": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "YahorHlushakPublicSubnetB"
+        },
+        "RouteTableId": {
+          "Ref": "YahorHlushakRouteTable"
+        }
+      }
+    },
+    "YahorHlushakSecGr1": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "YahorHlushakSecGr1",
+        "GroupDescription": "Yahor Hlushak security group for nodejs app application",
+        "VpcId": {
+          "Ref": "YahorHlushakNetwork"
+        }
+      }
+    },
+    "SecurityGroupIngressHTTP": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "YahorHlushakSecGr1"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "80",
+        "ToPort": "80",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "SecurityGroupIngressHTTPS": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "YahorHlushakSecGr1"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "443",
+        "ToPort": "443",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "SecurityGroupIngressSSH": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "YahorHlushakSecGr1"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "22",
+        "ToPort": "22",
+        "CidrIp": "213.184.231.20/32"
+      }
+    },
+    "SecurityGroupIngressAppPort": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "YahorHlushakSecGr1"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "3000",
+        "ToPort": "3000",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "YahorHlushakLaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateName": "YahorHlushakLaunchTemplate",
+        "LaunchTemplateData": {
+          "ImageId": {
+            "Ref": "YahorHlushakAMI"
+          },
+          "InstanceType": {
+            "Ref": "YahorHlushakInstanceType"
+          },
+          "KeyName": "yahor-hlushak-ec2",
+          "SecurityGroupIds": [
+            {
+              "Ref": "YahorHlushakSecGr1"
+            }
+          ]
+        }
+      }
+    },
+    "YahorHlushakAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "YahorHlushakPublicSubnetA"
+          },
+          {
+            "Ref": "YahorHlushakPublicSubnetB"
+          }
+        ],
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "YahorHlushakLaunchTemplate"
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "YahorHlushakLaunchTemplate",
+              "LatestVersionNumber"
+            ]
+          }
+        },
+        "MinSize": "1",
+        "MaxSize": "3",
+        "DesiredCapacity": "1"
+      }
+    },
+    "YahorHlushakScaleOutPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "YahorHlushakAutoScalingGroup"
+        },
+        "Cooldown": "300",
+        "ScalingAdjustment": "1"
+      }
+    },
+    "YahorHlushakCPUAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Trigger a scale out event if CPU usage is more than 50% for 5 minutes",
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Statistic": "Average",
+        "Period": "300",
+        "EvaluationPeriods": "1",
+        "Threshold": "50",
+        "AlarmActions": [
+          {
+            "Ref": "YahorHlushakScaleOutPolicy"
+          }
+        ],
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "YahorHlushakAutoScalingGroup"
+            }
+          }
+        ],
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+    "YahorHlushakLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "DependsOn": "InternetGatewayAttachment",
+      "Properties": {
+        "Name": "YahorHlushakLoadBalancer",
+        "Subnets": [
+          {
+            "Ref": "YahorHlushakPublicSubnetA"
+          },
+          {
+            "Ref": "YahorHlushakPublicSubnetB"
+          }
+        ],
+        "Type": "application"
+      }
+    },
+    "YahorHlushakTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": "YahorHlushakTargetGroup",
+        "Port": 80,
+        "Protocol": "HTTP",
+        "VpcId": {
+          "Ref": "YahorHlushakNetwork"
+        },
+        "TargetType": "instance"
+      }
+    },
+    "YahorHlushakListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "LoadBalancerArn": {
+          "Ref": "YahorHlushakLoadBalancer"
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "YahorHlushakTargetGroup"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
