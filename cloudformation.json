@@ -9,12 +9,6 @@
     }
   },
   "Resources": {
-    "S3Bucket": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        "BucketName": "yahor-hlushak-ci"
-      }
-    },
     "YahorHlushakNetwork": {
       "Type": "AWS::EC2::VPC",
       "Properties": {
@@ -218,7 +212,23 @@
             {
               "Ref": "YahorHlushakSecGr1"
             }
-          ]
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash",
+                  "\nyum update -y",
+                  "\nyum install -y nodejs",
+                  "\naws s3 sync s3://yahor-hlushak-ci/app /opt/node-app",
+                  "\ncd /opt/node-app",
+                  "\nnpm i",
+                  "\nnode index.js > index.log.js"
+                ]
+              ]
+            }
+          }
         }
       }
     },
