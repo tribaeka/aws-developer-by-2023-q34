@@ -181,7 +181,7 @@
         "IpProtocol": "tcp",
         "FromPort": "22",
         "ToPort": "22",
-        "CidrIp": "0.0.0.0/0"
+        "CidrIp": "213.184.231.20/32"
       }
     },
     "SecurityGroupIngressAppPort": {
@@ -224,7 +224,7 @@
                   "\naws s3 sync s3://yahor-hlushak-ci/app /opt/node-app",
                   "\ncd /opt/node-app",
                   "\nnpm i",
-                  "\nnode index.js > index.log.txt"
+                  "\nnode index.js > index.log.js"
                 ]
               ]
             }
@@ -316,7 +316,7 @@
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties": {
         "Name": "YahorHlushakTargetGroup",
-        "Port": 3000,
+        "Port": 80,
         "Protocol": "HTTP",
         "VpcId": {
           "Ref": "YahorHlushakNetwork"
