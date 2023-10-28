@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { imagesService } from '../services/imagesService';
+import { imagesService } from '../services';
 
 export async function downloadImageHandler(req: Request<{ name: string }>, res: Response): Promise<void> {
   const image = await imagesService.getImage(req.params.name);

@@ -11,3 +11,11 @@ create table if not exists images
     "createdAt" timestamp with time zone not null,
     "updatedAt" timestamp with time zone not null
 );
+create table if not exists notifications
+(
+    id serial not null
+        constraint notifications_pkey
+            primary key,
+    email varchar(255) not null,
+    subscriptionArn varchar(255) not null
+);

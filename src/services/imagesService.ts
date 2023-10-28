@@ -1,6 +1,6 @@
 import { Knex, knex } from 'knex';
 import { IMAGES_TABLE_NAME, KNEX_CONFIG } from '../config/knex.constants';
-import { Image } from '../types/Image';
+import { Image } from '../types';
 import { S3 } from 'aws-sdk';
 import { DEFAULT_REGION, S3_IMAGE_PREFIX, S3_IMAGES_BUCKET_NAME } from '../config/aws.constants';
 
@@ -22,7 +22,7 @@ class ImagesService {
     });
   }
 
-  public async initDB(): Promise<void> {
+  public async init(): Promise<void> {
     const isTableExists = this.db.schema.hasTable(IMAGES_TABLE_NAME);
 
     if (!isTableExists) {
@@ -43,7 +43,7 @@ class ImagesService {
   }
 
   public async getImage(name: string): Promise<(Image & { buffer: Buffer }) | null> {
-    const image = await this.db<Image>('images').where({ name }).first();
+    const image = await this.db<Image>(IMAGES_TABLE_NAME).where({ name }).first();
 
     if (!image) {
       return null;
@@ -60,7 +60,7 @@ class ImagesService {
 
     await this.saveImageToS3(buffer, contentType, filePath);
 
-    const [image] = await this.db<Image>('images').insert({
+    const [image] = await this.db<Image>(IMAGES_TABLE_NAME).insert({
       name,
       extension,
       filePath,
@@ -81,15 +81,15 @@ class ImagesService {
     }
 
     await this.deleteImageFromS3(image.filePath);
-    await this.db<Image>('images').where({ name }).delete();
+    await this.db<Image>(IMAGES_TABLE_NAME).where({ name }).delete();
   }
 
   public async getRandomImage(): Promise<Image | null | undefined> {
-    const imagesCount = await this.db<Image>('images').count('*', { as: 'count' });
+    const imagesCount = await this.db<Image>(IMAGES_TABLE_NAME).count('*', { as: 'count' });
     const totalImages = parseInt(imagesCount[0].count as string, 10);
     const randomOffset = Math.floor(Math.random() * totalImages);
 
-    return this.db<Image>('images').offset(randomOffset).limit(1).first();
+    return this.db<Image>(IMAGES_TABLE_NAME).offset(randomOffset).limit(1).first();
   }
 
   private async saveImageToS3(buffer: Buffer, mimeType: string, filePath: string): Promise<S3.ManagedUpload.SendData> {
@@ -124,5 +124,3 @@ class ImagesService {
 }
 
 export const imagesService = new ImagesService();
-
-imagesService.initDB();
