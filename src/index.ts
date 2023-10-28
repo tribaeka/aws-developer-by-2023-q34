@@ -4,7 +4,6 @@ import { imagesRouter, notificationsRouter } from './routes';
 import { imagesService, notificationsService } from './services';
 
 imagesService.init();
-notificationsService.init();
 
 const app = express();
 

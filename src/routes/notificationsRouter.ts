@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { subscribe, unsubscribe } from '../middlewares/notificationsModdlewares';
+import { subscribe, unsubscribe } from '../middlewares/notificationsMiddlewares';
 
 const router: Router = Router();
 

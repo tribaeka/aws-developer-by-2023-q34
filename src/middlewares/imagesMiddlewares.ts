@@ -15,7 +15,7 @@ export async function downloadImageHandler(req: Request<{ name: string }>, res: 
 export async function uploadImageHandler(req: Request, res: Response): Promise<void> {
   if (req.file !== undefined) {
     const { originalname: name, buffer, mimetype: contentType, size } = req.file;
-    const id = await imagesService.addImage({ name, buffer, contentType, size });
+    const id = await imagesService.addImage(req, { name, buffer, contentType, size });
 
     res.status(201).json({ id });
   } else {
