@@ -1,60 +1,86 @@
-import { SNS } from 'aws-sdk';
-import { DEFAULT_REGION, SNS_TOPIC_ARN } from '../config/aws.constants';
-import { knex, Knex } from 'knex';
-import { Notification } from '../types';
-import { KNEX_CONFIG, NOTIFICATIONS_TABLE_NAME } from '../config/knex.constants';
+import { SNS, SQS } from 'aws-sdk';
+import { DEFAULT_REGION, SNS_TOPIC_ARN, SQS_URL } from '../config/aws.constants';
+import { ImageMetadata } from '../types';
+
+
 class NotificationsService {
-  private db: Knex<Notification>;
   private sns: SNS;
+  private sqs: SQS;
 
   constructor() {
-    this.db = knex<Notification>(KNEX_CONFIG);
     this.sns = new SNS({
       region: DEFAULT_REGION,
     })
-  }
-
-  public async init(): Promise<void> {
-    const isTableExists = this.db.schema.hasTable(NOTIFICATIONS_TABLE_NAME);
-
-    if (!isTableExists) {
-      await this.db.schema.createTable(NOTIFICATIONS_TABLE_NAME, (table) => {
-        table.increments('id').primary();
-        table.string('email').notNullable();
-        table.string('subscriptionArn').unique().notNullable();
-      });
-      console.log(`Table "${NOTIFICATIONS_TABLE_NAME}" created.`);
-    } else {
-      console.log(`Table "${NOTIFICATIONS_TABLE_NAME}" already exists.`);
-    }
+    this.sqs = new SQS({
+      region: DEFAULT_REGION,
+    });
   }
 
   public async subscribe(email: string): Promise<void> {
-    const { SubscriptionArn } = await this.sns.subscribe({
+    await this.sns.subscribe({
       Protocol: 'email',
       TopicArn: SNS_TOPIC_ARN,
       Endpoint: email,
     }).promise();
-
-    console.log(SubscriptionArn);
-
-    await this.db<Notification>(NOTIFICATIONS_TABLE_NAME).insert({
-      email,
-      subscriptionArn: SubscriptionArn
-    }, '*');
   }
 
   public async unsubscribe(email: string): Promise<void> {
-    const notification = await this.db<Notification>(NOTIFICATIONS_TABLE_NAME).where({ email }).first()
+    const { Subscriptions } = await this.sns.listSubscriptionsByTopic({
+      TopicArn: SNS_TOPIC_ARN,
+    }).promise();
 
-    if (!notification) {
-      throw new Error(`Notification with email = $${email} not found in db`);
+    const subscription = Subscriptions?.find(subscription => subscription.Endpoint === email);
+
+    if (!subscription) {
+      throw new Error('Subscription not found')
     }
 
     await this.sns.unsubscribe({
-      SubscriptionArn: notification.subscriptionArn,
+      SubscriptionArn: <string>subscription.SubscriptionArn,
     })
+  }
+
+  public async addMessageToQueue(message: string): Promise<void> {
+    await this.sqs.sendMessage({
+      QueueUrl: SQS_URL,
+      MessageBody: message,
+    }).promise();
+  }
+
+  public async processSqsMessages(): Promise<void> {
+    console.log(this.sqs)
+    const receiveMessageResponse = await this.sqs.receiveMessage({
+      QueueUrl: SQS_URL,
+      MaxNumberOfMessages: 10,
+      WaitTimeSeconds: 10,
+    }).promise();
+    console.log(receiveMessageResponse);
+
+    if (receiveMessageResponse?.Messages && receiveMessageResponse?.Messages?.length > 0) {
+      for (const message of receiveMessageResponse?.Messages) {
+        const imageMetadata: ImageMetadata = JSON.parse(message.Body || '');
+        const snsMessage = `
+        An image has been uploaded at ${new Date(imageMetadata.updatedAt).toDateString()}:
+        Name: ${imageMetadata.name}
+        Extension: ${imageMetadata.extension}
+        Size: ${imageMetadata.size}
+        Download link: ${imageMetadata.downloadUrl}
+        `;
+
+        await this.sns.publish({
+          Subject: 'New image upload',
+          Message: snsMessage,
+          TopicArn: SNS_TOPIC_ARN,
+        }).promise();
+        await this.sqs.deleteMessage({
+          QueueUrl: SQS_URL,
+          ReceiptHandle: <string>message.ReceiptHandle,
+        }).promise();
+      }
+    }
   }
 }
 
 export const notificationsService = new NotificationsService();
+
+setInterval(() => notificationsService.processSqsMessages(), 60 * 1000);

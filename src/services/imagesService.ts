@@ -3,6 +3,8 @@ import { IMAGES_TABLE_NAME, KNEX_CONFIG } from '../config/knex.constants';
 import { Image } from '../types';
 import { S3 } from 'aws-sdk';
 import { DEFAULT_REGION, S3_IMAGE_PREFIX, S3_IMAGES_BUCKET_NAME } from '../config/aws.constants';
+import { notificationsService } from './notificationsService';
+import { Request } from 'express';
 
 type CreateImageParams = {
   name: string;
@@ -54,21 +56,32 @@ class ImagesService {
     return { ...image, buffer };
   }
 
-  public async addImage({ name, buffer, contentType, size }: CreateImageParams): Promise<number> {
+  public async addImage(req: Request, { name, buffer, contentType, size }: CreateImageParams): Promise<number> {
     const filePath = `${S3_IMAGE_PREFIX}${name}`;
     const extension = name.split('.')[1];
 
     await this.saveImageToS3(buffer, contentType, filePath);
 
+    const timestamp = new Date();
     const [image] = await this.db<Image>(IMAGES_TABLE_NAME).insert({
       name,
       extension,
       filePath,
       contentType,
       size,
-      createdAt: new Date(),
-      updatedAt: new Date()
-  }, '*');
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }, '*');
+
+    const imageMetadata = {
+      name,
+      extension,
+      size,
+      updatedAt: timestamp,
+      downloadUrl: `${req.protocol}://${req.hostname}/images/${name}/download`
+    };
+
+    await notificationsService.addMessageToQueue(JSON.stringify(imageMetadata))
 
     return image.id;
   }

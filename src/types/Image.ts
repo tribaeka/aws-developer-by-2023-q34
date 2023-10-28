@@ -8,3 +8,7 @@ export type Image = {
   updatedAt: Date;
   createdAt: Date;
 }
+
+export type ImageMetadata = Pick<Image, 'name' | 'extension' | 'size' | 'updatedAt'> & {
+  downloadUrl: string;
+}
