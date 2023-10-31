@@ -193,7 +193,7 @@
       "Properties": {
         "LaunchTemplateName": "YahorHlushakLaunchTemplate",
         "LaunchTemplateData": {
-          "ImageId": "ami-0c55b159cbfafe1f0",
+          "ImageId": "ami-0a91cd140a1fc148a",
           "InstanceType": "t2.micro",
           "KeyName": "yahor-hlushak-ec2",
           "SecurityGroupIds": [
