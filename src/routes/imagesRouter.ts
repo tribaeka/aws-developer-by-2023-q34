@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  dataConsistency,
   deleteImageHandler,
   downloadImageHandler,
   imageMetadataHandler, randomImageMetadataHandler,
@@ -10,6 +11,7 @@ import multer from 'multer';
 const router: Router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+router.get('/data-consistency', dataConsistency);
 router.get('/random/metadata', randomImageMetadataHandler);
 
 router.get('/:name/download', downloadImageHandler);

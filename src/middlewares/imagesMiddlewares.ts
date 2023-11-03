@@ -52,3 +52,9 @@ export async function randomImageMetadataHandler(req: Request, res: Response): P
     res.status(404).send('No images available');
   }
 }
+
+export async function dataConsistency(req: Request, res: Response): Promise<void> {
+  const result = await imagesService.checkDataConsistency();
+
+  res.send(result)
+}

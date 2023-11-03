@@ -46,41 +46,6 @@ class NotificationsService {
       MessageBody: message,
     }).promise();
   }
-
-  public async processSqsMessages(): Promise<void> {
-    console.log(this.sqs)
-    const receiveMessageResponse = await this.sqs.receiveMessage({
-      QueueUrl: SQS_URL,
-      MaxNumberOfMessages: 10,
-      WaitTimeSeconds: 10,
-    }).promise();
-    console.log(receiveMessageResponse);
-
-    if (receiveMessageResponse?.Messages && receiveMessageResponse?.Messages?.length > 0) {
-      for (const message of receiveMessageResponse?.Messages) {
-        const imageMetadata: ImageMetadata = JSON.parse(message.Body || '');
-        const snsMessage = `
-        An image has been uploaded at ${new Date(imageMetadata.updatedAt).toDateString()}:
-        Name: ${imageMetadata.name}
-        Extension: ${imageMetadata.extension}
-        Size: ${imageMetadata.size}
-        Download link: ${imageMetadata.downloadUrl}
-        `;
-
-        await this.sns.publish({
-          Subject: 'New image upload',
-          Message: snsMessage,
-          TopicArn: SNS_TOPIC_ARN,
-        }).promise();
-        await this.sqs.deleteMessage({
-          QueueUrl: SQS_URL,
-          ReceiptHandle: <string>message.ReceiptHandle,
-        }).promise();
-      }
-    }
-  }
 }
 
 export const notificationsService = new NotificationsService();
-
-setInterval(() => notificationsService.processSqsMessages(), 60 * 1000);

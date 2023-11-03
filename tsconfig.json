@@ -106,5 +106,5 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "exclude": ["s3", "scripts"],
+  "exclude": ["s3", "scripts", "src/lambda", "tsup.config.ts"],
 }

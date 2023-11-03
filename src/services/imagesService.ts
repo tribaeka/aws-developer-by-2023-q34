@@ -1,8 +1,13 @@
 import { Knex, knex } from 'knex';
 import { IMAGES_TABLE_NAME, KNEX_CONFIG } from '../config/knex.constants';
 import { Image } from '../types';
-import { S3 } from 'aws-sdk';
-import { DEFAULT_REGION, S3_IMAGE_PREFIX, S3_IMAGES_BUCKET_NAME } from '../config/aws.constants';
+import { S3, Lambda } from 'aws-sdk';
+import {
+  DATA_CONSISTENCY_LAMBDA_NAME,
+  DEFAULT_REGION,
+  S3_IMAGE_PREFIX,
+  S3_IMAGES_BUCKET_NAME
+} from '../config/aws.constants';
 import { notificationsService } from './notificationsService';
 import { Request } from 'express';
 
@@ -16,10 +21,14 @@ type CreateImageParams = {
 class ImagesService {
   private db: Knex<Image>;
   private s3: S3;
+  private lambda: Lambda;
 
   constructor() {
     this.db = knex<Image>(KNEX_CONFIG);
     this.s3 = new S3({
+      region: DEFAULT_REGION,
+    });
+    this.lambda = new Lambda({
       region: DEFAULT_REGION,
     });
   }
@@ -103,6 +112,12 @@ class ImagesService {
     const randomOffset = Math.floor(Math.random() * totalImages);
 
     return this.db<Image>(IMAGES_TABLE_NAME).offset(randomOffset).limit(1).first();
+  }
+
+  public checkDataConsistency(): Promise<unknown> {
+    return this.lambda.invoke({
+      FunctionName: DATA_CONSISTENCY_LAMBDA_NAME,
+    }).promise();
   }
 
   private async saveImageToS3(buffer: Buffer, mimeType: string, filePath: string): Promise<S3.ManagedUpload.SendData> {
