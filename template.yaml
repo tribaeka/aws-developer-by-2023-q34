@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SQS to SNS.
+Resources:
+  function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://yahor-hlushak-ci/lambda/lambda.zip
+      Handler: uploadNotifications.handler
+      FunctionName: yahor-hlushak-uploads-notifications
+      Runtime: nodejs14.x
+      Description: NodeJS function
+      MemorySize: 512
+      Timeout: 10
+      Policies:
+        - AWSLambda_FullAccess
+        - AWSLambdaSQSQueueExecutionRole
+        - AmazonSNSFullAccess
+        - AmazonSQSFullAccess
+      Tracing: Active
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Canary10Percent10Minutes
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: arn:aws:sqs:us-east-2:763233212644:yahor-hlushak-sqs
+            BatchSize: 10
